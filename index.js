@@ -21,11 +21,15 @@ const { match } = require('assert');
 const { finished } = require('stream');
 const { getUnpackedSettings } = require('http2');
 const { domain } = require('process');
+const { verify } = require('crypto');
 let powitaniekanal = JSON.parse(fs.readFileSync('./welcomechanel.json', "utf8"));
 let warns = JSON.parse(fs.readFileSync('./warndata.json', "utf8"));
 let powitanie = JSON.parse(fs.readFileSync('./welcomemessages.json',"utf8"));
 let colorpowitanie = JSON.parse(fs.readFileSync('./welcomecolor.json',"utf8"));
- 
+let ustawieniamuterole = JSON.parse(fs.readFileSync('./muterole.json',"utf8"));
+let weryfikacjakanal =  JSON.parse(fs.readFileSync('./veryficationchanel.json',"utf8"));
+let weryfikacjarola = JSON.parse(fs.readFileSync('./veryficationrole.json',"utf8"));
+let propozycjekanal = JSON.parse(fs.readFileSync('./chaneltopropozycje.json',"utf8"));
  // creates an arraylist containing phrases you want your bot to switch through.
 
 
@@ -62,6 +66,95 @@ client.once('disconnect', () => {
 });
 // Turn bot off (destroy), then turn it back on
 
+command(client, 'ustawienia', (message) => {
+  const { msg, member, mentions, guild } = message
+  const args = message.content.slice(prefix.length).trim().split(/ +/);
+
+  var pierwszaSpacja = message.content.indexOf(" ",);
+  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
+  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+if(message.content == `${prefix}ustawienia`){
+const Ustawienia = new Discord.MessageEmbed()
+.setTitle("Ustawienia")
+.addField('Mute', `Użycie ${prefix}ustawienia mute`)
+.addField('Weryfikacja', `Użycie ${prefix}ustawienia weryfikacja`)
+.addField(`Propozycje`, `Użycie ${prefix}ustawienia propozycje`)
+message.channel.send(Ustawienia)
+}
+
+if(message.content.slice(0, prefix.length + 15) == `${prefix}ustawienia mute`){
+  const text = drugaSpacja
+  if(text < 0 ) return message.reply("Nie oznaczyłeś roli mute")
+  console.log(text)
+  message.channel.send(`Ustawiłem role na: \n`+ message.content.slice(text) )
+ustawieniamuterole[guild.id] = {ustawieniamuterole: `${message.content.slice(text).replace("<","").replace(">","").replace("@&","")}`}
+ fs.writeFile('./muterole.json', JSON.stringify(ustawieniamuterole), function(err, result) {
+  if(err) console.log('error', err);
+})
+}
+if(message.content.slice(0, prefix.length + 22) == `${prefix}ustawienia weryfikacja`){
+  const ustawieniaeryfikacji = new Discord.MessageEmbed()
+  .setTitle("Ustawienia")
+  if(!weryfikacjakanal[guild.id]){
+    ustawieniaeryfikacji.addField("Kanał", `Nie ustawiono`)
+  }else{
+    ustawieniaeryfikacji.addField("Kanał", `<#${weryfikacjakanal[guild.id].weryfikacjakanal.replace(" ","")}>`)
+  }
+  if(!weryfikacjarola[guild.id]){
+    ustawieniaeryfikacji.addField("Rola", `Nie ustawiono`)
+  }else{
+    ustawieniaeryfikacji.addField("Rola", `<@&${weryfikacjarola[guild.id].weryfikacjarola}>`)
+  }
+
+
+if(message.content.slice(0, prefix.length + 28) == `${prefix}ustawienia weryfikacja kanal`){
+  const text = trzeciaSpacja
+  if(text < 0 ) return message.reply("Nie oznaczyłeś kanału")
+  message.channel.send(`Ustawiłem kanał na ${message.content.slice(text)}`)
+  weryfikacjakanal[guild.id] = {weryfikacjakanal: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`}
+  fs.writeFile('./veryficationchanel.json', JSON.stringify(weryfikacjakanal), function(err, result) {
+   if(err) console.log('error', err);
+ })
+}else{
+  if(message.content.slice(0, prefix.length + 27) == `${prefix}ustawienia weryfikacja rola`){
+    const text = trzeciaSpacja
+    if(text < 0 ) return message.reply("Nie oznaczyłeś roli")
+    message.channel.send(`Ustawiłem role na ${message.content.slice(text)}`)
+    weryfikacjarola[guild.id] = {weryfikacjarola: `${message.content.slice(text).replace("<","").replace(">","").replace("@&","").replace(" ","")}`}
+    fs.writeFile('./veryficationrole.json', JSON.stringify(weryfikacjarola), function(err, result) {
+     if(err) console.log('error', err);
+    })
+  }else{
+  message.channel.send(ustawieniaeryfikacji)
+}
+}
+}
+
+if(message.content.slice(0, prefix.length + 21) == `${prefix}ustawienia propozycje`){
+  if(message.content.slice(0, prefix.length + 25) == `${prefix}ustawienia propozycje set`){
+    const text = trzeciaSpacja
+    if(text < 0 ) return message.reply("Nie zahasztagowałeś kanału")
+    message.channel.send(`Ustawiłem kanał na ${message.content.slice(text)}`)
+    propozycjekanal[guild.id] = {propozycjekanal: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`}
+    fs.writeFile('./chaneltopropozycje.json', JSON.stringify(propozycjekanal), function(err, result) {
+     if(err) console.log('error', err);
+    })
+  }else{
+    
+    const propozycjamessageustawinia = new Discord.MessageEmbed()
+    .setTitle("Ustawienia")
+    if(!propozycjekanal[guild.id]){
+      propozycjamessageustawinia.addField("Kanał", `Nie ustawiono`)
+    }else{
+      propozycjamessageustawinia.addField("Kanał", `<@&${propozycjekanal[guild.id].propozycjekanal}>`)
+    }
+    message.channel.send(propozycjamessageustawinia)
+  }
+
+}
+})
+
 
 command(client, 'powitanie', (message) => {
   const { msg, member, mentions, guild } = message
@@ -72,8 +165,12 @@ command(client, 'powitanie', (message) => {
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
-   if(!message.member.hasPermission(`ADMINISTRATOR`)) return message.reply('Nie masz uprawnien `ADMINISTRATOR`');
-
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+  if(!colorpowitanie[guild.id]) { colorpowitanie[guild.id] = {colorpowitanie: '4ef542'}
+    fs.writeFile('./welcomemessages.json', JSON.stringify(powitanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
+}
   if(!powitanie[guild.id]) { powitanie[guild.id] = {powitanie: 'Witaj %Osoba'}
   fs.writeFile('./welcomemessages.json', JSON.stringify(powitanie), function(err, result) {
     if(err) console.log('error', err);
@@ -81,16 +178,22 @@ command(client, 'powitanie', (message) => {
 
   }
   if(message.content == `${prefix}powitanie`){
-    JSON.parse(fs.readFileSync('./welcomemessages.json',"utf8"));
+
     const Domyslny = new Discord.MessageEmbed()
-    .setColor()
+    .setColor(colorpowitanie[guild.id].colorpowitanie)
     .setTitle("Powitanie")
     .addField(`${prefix}powitanie set`, 'Ustawia powitanie po set, Aby oznaczyć osoba dodaj %Osoba  a żeby pokazać ilość osób na serwerze dodaj %Ilosc')
     .addField(`${prefix}powitanie color`, 'Ustawia Kolor powitania po color')
     .addField(`${prefix}powitanie kanal`, `Ustawia kanał powitania po kanal, Aby poprawnie dodać kanał zahasztaguj dany kanał`)
     .addField(`Aktualne Powitanie`, powitanie[guild.id].powitanie)
-    .addField('Aktualny Kolor', )
-    .addField(`Aktualny Kanał`, )
+    .addField('Aktualny Kolor', colorpowitanie[guild.id].colorpowitanie + `    Kolor tej wiadomość obrazuje kolor wiadomości powitalnej` )
+
+    if(!powitaniekanal[guild.id]) {
+      Domyslny.addField(`Aktualny Kanał`, `Nie ustawiony` )
+    }else{
+      Domyslny.addField(`Aktualny Kanał`, `<#${powitaniekanal[guild.id].powitaniekanal.replace(" ", "")}>` )
+    }
+
     message.channel.send(Domyslny)
   }
 if(message.content.slice(0, prefix.length + 13) == `${prefix}powitanie set`){
@@ -108,15 +211,23 @@ powitanie[guild.id] = {powitanie: `${message.content.slice(text)}`}
 if(message.content.slice(0, prefix.length + 15) == `${prefix}powitanie kanal`){
   const text = drugaSpacja
   if(text < 0 ) return message.reply("Nie podałeś kanału")
-  powitaniekanal[guild.id] = {powitaniekanal: `${message.content.slice(text).replace("<", "").replace(">","").replace("#","")}`}
+  powitaniekanal[guild.id] = {powitaniekanal: `${message.content.slice(text).replace("<", "").replace(">","").replace("#","").replace(" ","")}`}
   fs.writeFile('./welcomechanel.json', JSON.stringify(powitaniekanal), function(err, result) {
     if(err) console.log('error', err);
   })
 
   message.channel.send('Kanał powitani ustawion na' + message.content.slice(text))
 }
+if(message.content.slice(0, prefix.length + 15) == `${prefix}powitanie color`){
+const text = drugaSpacja
+if(text < 0 ) return message.reply("Nie podałeś koloru")
+colorpowitanie[guild.id] = {colorpowitanie: `${message.content.slice(text)}`}
+  fs.writeFile('./welcomecolor.json', JSON.stringify(colorpowitanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
 
-
+  message.channel.send('Kolor powitani ustawion na' + message.content.slice(text))
+}
 })
 
 
@@ -138,10 +249,10 @@ client.on('guildMemberRemove', guildMember => {
 })
 client.on('guildMemberAdd', guildMember => {
   const { member, mentions, guild } = guildMember
-  const kanaldopowitan = powitaniekanal[guild.id].powitaniekanal
+  const kanalsend = `${powitaniekanal[guild.id].powitaniekanal}`.replace(" ", "")
   const nowy = guildMember.id
   const welcomemessage = powitanie[guild.id].powitanie
-
+  
   console.log("Witaj Nowy")
   let myGuild = client.guilds.cache.get("794365821719281704");
   let memberCount = guildMember.guild.memberCount; 
@@ -149,16 +260,16 @@ client.on('guildMemberAdd', guildMember => {
   const clear = new Discord.MessageEmbed()
       .setTitle("Witaj")  
       .setDescription(witaj)
-      .setColor('00ff22')
-  kanaldopowitan.send(clear); 
+      .setColor(colorpowitanie[guild.id].colorpowitanie)
 
+  client.channels.cache.get(kanalsend).send(clear)
   guildMember.roles.add("788331452492283904")
   guildMember.roles.add("786863157314191390")
   guildMember.roles.add("788331592791490620")
   guildMember.roles.add("788335878388580362")
   guildMember.roles.add("788331914846142494")
 
-  client.channels.cache.get('794365821719281708').send(clear); 
+
 
 
 });
@@ -423,13 +534,16 @@ if(pierwszaSpacja > 0) {
 })
 
 command(client, 'weryfikacja', (message) => {
-  
+
   const { member, channel, content, mentions, guild, id } = message
   const tag = `<@${member.id}>`
-  let Graczrole = message.guild.roles.cache.find(role => role.id === "787337351541162024");
+  const veryficationkanal = client.channels.cache.get(weryfikacjakanal[guild.id].weryfikacjakanal.replace(" ",""))
+  let Graczrole = message.guild.roles.cache.find(role => role.id === weryfikacjarola[guild.id].weryfikacjarola.replace(" ",""));
   let targetMember = guild.members.cache.get(id);
   //console.log(targetMember);
-  
+  if(!weryfikacjakanal[guild.id]) return message.reply("Ta funkcja nie została zkonfigurowana")
+  if(!weryfikacjarola[guild.id]) return message.reply("Ta funkcja nie została zkonfigurowana")
+  if(message.channel == veryficationkanal){
   let object = Math.floor(Math.random(300, 9000) * 100000000000);
   let embedr = new Discord.MessageEmbed()
   .setTitle("Weryfikacja")
@@ -468,6 +582,7 @@ command(client, 'weryfikacja', (message) => {
             }
  }, 10000)
 })
+}
 });
 command(client, 'zasady', (message) => {
   const { member, mentions } = message
@@ -506,8 +621,9 @@ command(client, 'zasady', (message) => {
 });
   
 command(client, 'mute', async (message) => {
-  const { member, mentions } = message
+  const { member, mentions, guild } = message
   const tag = `<@${member.id}>`
+  const muterole = ustawieniamuterole[guild.id].ustawieniamuterole.replace(" ", "")
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   const powod = message.content.slice(drugaSpacja).replace(" ","")
@@ -523,7 +639,7 @@ command(client, 'mute', async (message) => {
   .addField(`Powód:`, powod)
   .setFooter(`Chcesz unmute? Napisz do administracji!`)
   message.channel.send(mute)
-  target.roles.add("788332780606062602")
+  target.roles.add(muterole)
 
 })
 
@@ -632,8 +748,8 @@ for(const file of commandfiles){
 client.on("message", async message =>{
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
-  const { member, mentions } = message
-  const tag = `<@${member}>`
+  const { member, mentions, guild } = message
+  const tag = `${member}`
   const prefix = config.prefix;
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
@@ -648,7 +764,7 @@ client.on("message", async message =>{
     message.channel.send(Propozycja)
 
     setTimeout(function(){ 
-const kanal =  client.channels.cache.get("788341215984222219")
+const kanal =  client.channels.cache.get(propozycjekanal[guild.id].propozycjekanal)
     kanal.messages.fetch({ limit: 2 }).then(messages => { var lastMessage = messages.first();
       lastMessage.react("❎")
       lastMessage.react("✅")
@@ -889,7 +1005,7 @@ command(client, 'status watching', (message) => {
       description: "",
       fields: [{
           name: "Autorzy Bota",
-          value: "`arturm#9450` i `@Zombel#1971`"
+          value: "`arturm#9450`"
         },
         {
           name: "Prefix",
@@ -897,7 +1013,7 @@ command(client, 'status watching', (message) => {
         },
         {
           name: "Informacje Ogólne",
-          value: "Bot Coffee jest botem 4FUN i Moderacjnym. \nZostał stworzony przez `arturm#9450` i `@Zombel#1971`"
+          value: "Bot Coffee jest botem 4FUN i Moderacjnym. \nZostał stworzony przez `arturm#9450`"
         }
       ],
       timestamp: new Date(),
