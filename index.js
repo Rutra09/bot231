@@ -29,7 +29,10 @@ let colorpowitanie = JSON.parse(fs.readFileSync('./welcomecolor.json',"utf8"));
 let ustawieniamuterole = JSON.parse(fs.readFileSync('./muterole.json',"utf8"));
 let weryfikacjakanal =  JSON.parse(fs.readFileSync('./veryficationchanel.json',"utf8"));
 let weryfikacjarola = JSON.parse(fs.readFileSync('./veryficationrole.json',"utf8"));
-let propozycjekanal = JSON.parse(fs.readFileSync('./chaneltopropozycje.json',"utf8"));
+let pożegnaniekanal = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"));
+let pożegnaniekolor = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"));
+let pożegnanie = JSON.parse(fs.readFileSync('./goodbye.json', "utf8"));
+let propozycjekanal = JSON.parse(fs.readFileSync('./chaneltopropozycje.json',"utf8"));  
  // creates an arraylist containing phrases you want your bot to switch through.
 
 
@@ -80,6 +83,8 @@ const Ustawienia = new Discord.MessageEmbed()
 .addField('Mute', `Użycie ${prefix}ustawienia mute`)
 .addField('Weryfikacja', `Użycie ${prefix}ustawienia weryfikacja`)
 .addField(`Propozycje`, `Użycie ${prefix}ustawienia propozycje`)
+.addField(`Powitanie`, `Użycie ${prefix}powitanie`)
+.addField(`Pożegnanie`, `Użycie ${prefix}pożegnanie`)
 message.channel.send(Ustawienia)
 }
 
@@ -153,6 +158,8 @@ if(message.content.slice(0, prefix.length + 21) == `${prefix}ustawienia propozyc
   }
 
 }
+
+
 })
 
 
@@ -166,8 +173,8 @@ command(client, 'powitanie', (message) => {
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
 if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
-  if(!colorpowitanie[guild.id]) { colorpowitanie[guild.id] = {colorpowitanie: '4ef542'}
-    fs.writeFile('./welcomemessages.json', JSON.stringify(powitanie), function(err, result) {
+  if(!colorpowitanie[guild.id]) { colorpowitanie[guild.id] = {colorpowitanie: '#a2ff00'}
+    fs.writeFile('./welcomecolor.json', JSON.stringify(powitanie), function(err, result) {
     if(err) console.log('error', err);
   })
 }
@@ -227,27 +234,122 @@ colorpowitanie[guild.id] = {colorpowitanie: `${message.content.slice(text)}`}
   })
 
   message.channel.send('Kolor powitani ustawion na' + message.content.slice(text))
+  const color = new Discord.MessageEmbed()
+  .setColor(colorpowitanie[guild.id].colorpowitanie)
+message.channel.send(color)
 }
 })
 
+command(client, 'pożegnanie', (message) => {
+  const { msg, member, mentions, guild } = message
+  
+ 
+  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  
+  var pierwszaSpacja = message.content.indexOf(" ",);
+  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
+  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+  if(!pożegnaniekolor[guild.id]) { pożegnaniekolor[guild.id] = {pożegnaniekolor: '#ff0000'}
+    fs.writeFile('./goodbyecolor.json', JSON.stringify(pożegnaniekolor), function(err, result) {
+    if(err) console.log('error', err);
+  })
+}
+  if(!pożegnanie[guild.id]) { pożegnanie[guild.id] = {pożegnanie: 'Żegnaj %Osoba'}
+  fs.writeFile('./goodbye.json', JSON.stringify(pożegnanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
 
+  }
+  if(message.content == `${prefix}pożegnanie`){
+
+    const Domyslny = new Discord.MessageEmbed()
+    .setColor(pożegnaniekolor[guild.id].pożegnaniekolor)
+    .setTitle("Pożegnanie")
+    .addField(`${prefix}pożegnanie set`, 'Ustawia powitanie po set, Aby oznaczyć osoba dodaj %Osoba  a żeby pokazać ilość osób na serwerze dodaj %Ilosc')
+    .addField(`${prefix}pożegnanie color`, 'Ustawia Kolor pożegnani po color')
+    .addField(`${prefix}pożegnanie kanal`, `Ustawia kanał pożegnani po kanal, Aby poprawnie dodać kanał zahasztaguj dany kanał`)
+    .addField(`Aktualne Pożegnanie`, pożegnanie[guild.id].pożegnanie)
+    .addField('Aktualny Kolor', pożegnaniekolor[guild.id].pożegnaniekolor + `    Kolor tej wiadomość obrazuje kolor wiadomości pożegnalnej` )
+
+    if(!pożegnaniekanal[guild.id]) {
+      Domyslny.addField(`Aktualny Kanał`, `Nie ustawiony` )
+    }else{
+      Domyslny.addField(`Aktualny Kanał`, `<#${pożegnaniekanal[guild.id].pożegnaniekanal.replace(" ", "")}>` )
+    }
+
+    message.channel.send(Domyslny)
+  }
+if(message.content.slice(0, prefix.length + 14) == `${prefix}pożegnanie set`){
+const text = drugaSpacja
+console.log(text)
+if(text < 0 ) return message.reply("Nie podałeś wiadomości pożegnania")
+if(text > 0 ) {
+message.channel.send(`Ustawiłem powitanie o treści: \n`+ message.content.slice(text) )
+pożegnanie[guild.id] = {pożegnanie: `${message.content.slice(text)}`}
+ fs.writeFile('./goodbye.json', JSON.stringify(pożegnanie), function(err, result) {
+  if(err) console.log('error', err);
+})
+}
+}
+if(message.content.slice(0, prefix.length + 16) == `${prefix}pożegnanie kanal`){
+  const text = drugaSpacja
+  if(text < 0 ) return message.reply("Nie podałeś kanału")
+  pożegnaniekanal[guild.id] = {pożegnaniekanal: `${message.content.slice(text).replace("<", "").replace(">","").replace("#","").replace(" ","")}`}
+  fs.writeFile('./goodbyechanel.json', JSON.stringify(pożegnaniekanal), function(err, result) {
+    if(err) console.log('error', err);
+  })
+
+  message.channel.send('Kanał pożegnani ustawion na' + message.content.slice(text))
+}
+if(message.content.slice(0, prefix.length + 16) == `${prefix}pożegnanie color`){
+const text = drugaSpacja
+if(text < 0 ) return message.reply("Nie podałeś koloru")
+pożegnaniekolor[guild.id] = {pożegnaniekolor: `${message.content.slice(text)}`}
+  fs.writeFile('./goodbyecolor.json', JSON.stringify(pożegnaniekolor), function(err, result) {
+    if(err) console.log('error', err);
+  })
+
+  message.channel.send('Kolor pożegnani ustawion na' + message.content.slice(text))
+  const color = new Discord.MessageEmbed()
+    .setColor(pożegnaniekolor[guild.id].pożegnaniekolor)
+  message.channel.send(color)
+}
+})
 
 client.on('guildMemberRemove', guildMember => {
-  const nowy = guildMember.id
+  const { member, mentions, guild } = guildMember
+  if(!pożegnaniekanal[guild.id]) return
+
+    const kanalsend = `${pożegnaniekanal[guild.id].pożegnaniekanal}`.replace(" ", "")
+    const nowy = guildMember.id
+    const welcomemessage = pożegnanie[guild.id].pożegnanie
+  
+
+  
   console.log("Witaj Nowy")
   let myGuild = client.guilds.cache.get("794365821719281704");
   let memberCount = guildMember.guild.memberCount; 
+  const Żegnaj = welcomemessage.replace("%Osoba", `<@${nowy}>`).replace("%Ilosc", `${memberCount}`)
   const clear = new Discord.MessageEmbed()
       .setTitle("Żegnaj")  
-      .setDescription(`Żegnaj **${guildMember}**. \nBędzie cię nam brakować. \nJest nas teraz **${memberCount}**.`)
-      .setColor('00ff22')
-  client.channels.cache.get('786867402663002113').send(clear); 
-  guildMember.send("Przykro nam że odchodzisz z Granko :( \nJakbyś chciał/a wrócić o to link: https://discord.gg/aJ423zyerN")
-  client.channels.cache.get('794365821719281708').send(clear); 
+      .setDescription(Żegnaj)
+      .setColor(pożegnaniekolor[guild.id].pożegnaniekolor)
+
+  client.channels.cache.get(kanalsend).send(clear)
+  guildMember.roles.add("788331452492283904")
+  guildMember.roles.add("786863157314191390")
+  guildMember.roles.add("788331592791490620")
+  guildMember.roles.add("788335878388580362")
+  guildMember.roles.add("788331914846142494")
+
 
 
 })
 client.on('guildMemberAdd', guildMember => {
+  if(!powitaniekanal[guild.id]) return
+  
+
   const { member, mentions, guild } = guildMember
   const kanalsend = `${powitaniekanal[guild.id].powitaniekanal}`.replace(" ", "")
   const nowy = guildMember.id
@@ -405,8 +507,10 @@ command(client, 'odbierz', (message) => {
   const rola = (message.content.slice(pierwsza,druga))
   let kupa = message.guild.roles.cache.get("788333577376104468");
   let good = message.guild.roles.cache.get("788333577376104468");
+  
   if(message.member.hasPermission("MANAGE_ROLES")) {
-    
+    if(!target) return message.reply("Oznacz osobę")
+   
     target.roles.remove(rola)
     message.channel.send(`Ranga <@&${rola}> odbrana dla <@${target.id}>`)
   }else{
@@ -428,6 +532,7 @@ command(client, 'nadaj', (message) => {
   let kupa = message.guild.roles.cache.get("788333577376104468");
   let good = message.guild.roles.cache.get("788333577376104468");
   if(message.member.hasPermission("MANAGE_ROLES")) {
+    if(!target) return message.reply("Oznacz osobę")
     
     target.roles.add(rola)
     message.channel.send(`Ranga <@&${rola}> nadana dla <@${target.id}>`)
@@ -761,6 +866,7 @@ client.on("message", async message =>{
     .setTitle(`Propozycje`)
     .setDescription(`Propozycja od ${tag}: ${message.content.slice(0).replace(".","")}`)
     .setColor("#32a83e")
+
     message.channel.send(Propozycja)
 
     setTimeout(function(){ 
