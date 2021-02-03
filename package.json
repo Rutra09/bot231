@@ -27,5 +27,8 @@
     "os": "^0.1.1",
     "wokcommands": "^1.1.5",
     "ytdl-core": "^4.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
