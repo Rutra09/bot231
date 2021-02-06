@@ -10,11 +10,11 @@ const client = new Discord.Client();
 const queue = new Map();
 const ping = require('minecraft-server-util')
 const api = require('imageapi.js');
-const { token , } = require('./config.json');
+const { token , prefix} = require('./config.json');
 client.commands = new Discord.Collection();
 const commandfiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const config = require('./config.json')
-
+const command = require('./command');
 const { APIMessage, DiscordAPIError } = require('discord.js');
 const { error } = require('console');
 const { match } = require('assert');
@@ -22,8 +22,6 @@ const { finished } = require('stream');
 const { getUnpackedSettings } = require('http2');
 const { domain } = require('process');
 const { verify } = require('crypto');
-const { CLIENT_RENEG_WINDOW } = require('tls');
-const command = require('./command');
 let powitaniekanal = JSON.parse(fs.readFileSync('./welcomechanel.json', "utf8"));
 let warns = JSON.parse(fs.readFileSync('./warndata.json', "utf8"));
 let powitanie = JSON.parse(fs.readFileSync('./welcomemessages.json',"utf8"));
@@ -35,8 +33,6 @@ let pożegnaniekanal = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"
 let pożegnaniekolor = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"));
 let pożegnanie = JSON.parse(fs.readFileSync('./goodbye.json', "utf8"));
 let propozycjekanal = JSON.parse(fs.readFileSync('./chaneltopropozycje.json',"utf8")); 
-let prefixguild = JSON.parse(fs.readFileSync('./prefixguild.json',"utf8"));
-
 
 
  // creates an arraylist containing phrases you want your bot to switch through.
@@ -44,16 +40,6 @@ let prefixguild = JSON.parse(fs.readFileSync('./prefixguild.json',"utf8"));
 
   const Dlugip = 1
 
-client.on("message", async message => {
-  const {guild, } = message
-  
-  if(!prefixguild[guild.id]){
-    prefixguild[guild.id] = {prefixguild: `.`}
-    fs.writeFile('./prefixguild.json', JSON.stringify(prefixguild), function(err, result) {
-     if(err) console.log('error', err);
-   })
-  }
-})
 
 
 client.on("ready", () =>{
@@ -70,54 +56,24 @@ client.on("ready", () =>{
   setInterval(() => {
       const index = Math.floor(Math.random() * (activities_list.length - 1) + 1); // generates a random number between 1 and the length of the activities array list (in this case 5).
       client.user.setActivity(activities_list[index]); // sets bot's activities to one of the phrases in the arraylist.
-  }, 1); // Runs this every 10 seconds.
+  }, 5000); // Runs this every 10 seconds.
 
 
 });
 
 
-command(client, 'prefix', (message) => {
-    
-  const { msg, member, mentions, guild } = message
-  
-  const prefix = prefixguild[guild.id].prefixguild
-  const args = message.content.slice(prefix.length).trim().split(/ +/);
 
-
-  var pierwszaSpacja = message.content.indexOf(" ",);
-  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
-  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
-if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
-
-
-const prefixmessage = new Discord.MessageEmbed()
-.setColor("ff32")
-.setTitle("Prefix")
-.addField("Aktualny Prefix", prefix)
-const text = drugaSpacja
-if(message.content.slice(0, prefix.length + 10) == `${prefix}prefix set`) {
-  if(text < 0 ) return message.reply("Nie podałeś nowego prefixu")
-  message.channel.send(`Ustawiłem prefix na: `+ message.content.slice(text +1) )
-  prefixguild[guild.id] = {prefixguild: `${message.content.slice(text+1)}`}
- fs.writeFile('./prefixguild.json', JSON.stringify(prefixguild), function(err, result) {
-  if(err) console.log('error', err);
-})
-
-}else{
-if(message.content.slice(0, prefix.length + 6) == `${prefix}prefix`)return message.channel.send(prefixmessage)
-}
-})
-
-
-
+client.once('reconnecting', () => {
+ console.log('Reconnecting!');
+});
+client.once('disconnect', () => {
+ console.log('Disconnect!');
+});
+// Turn bot off (destroy), then turn it back on
 
 command(client, 'ustawienia', (message) => {
-  
   const { msg, member, mentions, guild } = message
-  
-  const prefix = prefixguild[guild.id].prefixguild
   const args = message.content.slice(prefix.length).trim().split(/ +/);
-
 
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
@@ -211,12 +167,10 @@ if(message.content.slice(0, prefix.length + 21) == `${prefix}ustawienia propozyc
 
 command(client, 'powitanie', (message) => {
   const { msg, member, mentions, guild } = message
-  const prefix = prefixguild[guild.id].prefixguild
+  
  
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   
-
-
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
@@ -290,12 +244,10 @@ message.channel.send(color)
 
 command(client, 'pożegnanie', (message) => {
   const { msg, member, mentions, guild } = message
-  const prefix = prefixguild[guild.id].prefixguild
+  
  
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   
-
-
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
@@ -427,7 +379,117 @@ client.on('guildMemberAdd', guildMember => {
 
 });
 
+client.on("message", async message => {
 
+  if (message.author.bot) return;
+  if (!message.content.startsWith(prefix)) return;
+
+  const serverQueue = queue.get(message.guild.id);
+
+  if (message.content.startsWith(`${prefix}play`)) {
+    execute(message, serverQueue);
+    return;
+  } else if (message.content.startsWith(`${prefix}skip`)) {
+    skip(message, serverQueue);
+    return;
+  } else if (message.content.startsWith(`${prefix}stop`)) {
+    stop(message, serverQueue);
+    return;
+  } else {
+  }
+});
+
+async function execute(message, serverQueue) {
+  const args = message.content.split(" ");
+
+  const voiceChannel = message.member.voice.channel;
+  if (!voiceChannel)
+    return message.channel.send(
+      "Nie jesteś na żadnym kanale"
+    );
+  const permissions = voiceChannel.permissionsFor(message.client.user);
+  if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+    return message.channel.send(
+      "Sory nie mam permisji"
+    );
+  }
+
+  const songInfo = await ytdl.getInfo(args[1]);
+  const song = {
+        title: songInfo.videoDetails.title,
+        url: songInfo.videoDetails.video_url,
+   };
+
+  if (!serverQueue) {
+    const queueContruct = {
+      textChannel: message.channel,
+      voiceChannel: voiceChannel,
+      connection: null,
+      songs: [],
+      volume: 5,
+      playing: true
+    };
+
+    queue.set(message.guild.id, queueContruct);
+
+    queueContruct.songs.push(song);
+
+    try {
+      var connection = await voiceChannel.join();
+      queueContruct.connection = connection;
+      play(message.guild, queueContruct.songs[0]);
+    } catch (err) {
+      console.log(err);
+      queue.delete(message.guild.id);
+      return message.channel.send(err);
+    }
+  } else {
+    serverQueue.songs.push(song);
+    return message.channel.send(`${song.title} został dodany do kolejki`);
+  }
+}
+
+function skip(message, serverQueue) {
+  if (!message.member.voice.channel)
+    return message.channel.send(
+      "Nie możesz wyłaczyć muzyki!"
+    );
+  if (!serverQueue)
+    return message.channel.send("Nie ma dalej piosenek");
+  serverQueue.connection.dispatcher.end();
+}
+
+function stop(message, serverQueue) {
+  if (!message.member.voice.channel)
+    return message.channel.send(
+      "Nie możesz wyłaczyć muzyki!"
+    );
+    
+  if (!serverQueue)
+    return message.channel.send("Muzyka nie jest grana");
+    
+  serverQueue.songs = [];
+  serverQueue.connection.dispatcher.end();
+}
+
+function play(guild, song) {
+  const serverQueue = queue.get(guild.id);
+  if (!song) {
+    serverQueue.voiceChannel.leave();
+    queue.delete(guild.id);
+    return;
+  }
+
+  const dispatcher = serverQueue.connection
+    .play(ytdl(song.url))
+    .on("finish", () => {
+      serverQueue.songs.shift();
+      play(guild, serverQueue.songs[0]);
+    })
+    .on("error", error => console.error(error));
+  dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
+  serverQueue.textChannel.send(`Puszczam: **${song.title}**`);
+}
 command(client, 'ping', (message) => {
     message.channel.send(`🏓Latency to ${Date.now() - message.createdTimestamp}ms. Latency bota to ${Math.round(client.ws.ping)}ms`);
   
@@ -453,8 +515,6 @@ command(client, 'odbierz', (message) => {
   let kupa = message.guild.roles.cache.get("788333577376104468");
   let good = message.guild.roles.cache.get("788333577376104468");
   
-  const prefix = prefixguild[guild.id].prefixguild
-
   if(message.member.hasPermission("MANAGE_ROLES")) {
     if(!target) return message.reply("Oznacz osobę")
    
@@ -478,8 +538,6 @@ command(client, 'nadaj', (message) => {
   const rola = (message.content.slice(pierwsza,druga))
   let kupa = message.guild.roles.cache.get("788333577376104468");
   let good = message.guild.roles.cache.get("788333577376104468");
-  const prefix = prefixguild[guild.id].prefixguild
-
   if(message.member.hasPermission("MANAGE_ROLES")) {
     if(!target) return message.reply("Oznacz osobę")
     
@@ -553,9 +611,6 @@ command(client, 'embed', (message) => {
   let Graczrole = message.guild.roles.cache.find(role => role.id === "787337351541162024");
   let targetMember = guild.members.cache.get(id);
  //strefa embed
- 
- const prefix = prefixguild[guild.id].prefixguild
-
  var pierwszaSpacja = message.content.indexOf(" ",);
  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1);
@@ -599,8 +654,6 @@ command(client, 'weryfikacja', (message) => {
   const veryficationkanal = client.channels.cache.get(weryfikacjakanal[guild.id].weryfikacjakanal.replace(" ",""))
   let Graczrole = message.guild.roles.cache.find(role => role.id === weryfikacjarola[guild.id].weryfikacjarola.replace(" ",""));
   let targetMember = guild.members.cache.get(id);
-  const prefix = prefixguild[guild.id].prefixguild
-
   //console.log(targetMember);
   if(!weryfikacjakanal[guild.id]) return message.reply("Ta funkcja nie została zkonfigurowana")
   if(!weryfikacjarola[guild.id]) return message.reply("Ta funkcja nie została zkonfigurowana")
@@ -684,8 +737,6 @@ command(client, 'zasady', (message) => {
 command(client, 'mute', async (message) => {
   const { member, mentions, guild } = message
   const tag = `<@${member.id}>`
-  const prefix = prefixguild[guild.id].prefixguild
-
   const muterole = ustawieniamuterole[guild.id].ustawieniamuterole.replace(" ", "")
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
@@ -709,8 +760,6 @@ command(client, 'mute', async (message) => {
 command(client, 'unwarn', (message) =>{
   const { member, mentions } = message
   const tag = `<@${member.id}>`
-  const prefix = prefixguild[guild.id].prefixguild
-
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     if(!message.member.hasPermission(`MANAGE_MESSAGES`)) return message.reply(`Nie masz permisji`);
     var user = message.mentions.users.first();
@@ -729,10 +778,7 @@ command(client, 'unwarn', (message) =>{
 
 })
 command(client, 'warn', (message) =>{
-  const { member, mentions, guild } = message
-  
-  const prefix = prefixguild[guild.id].prefixguild
-
+  const { member, mentions } = message
   const tag = `<@${member.id}>`
     const args = message.content.slice(prefix.length).trim().split(/ +/);
   if(!message.member.hasPermission(`MANAGE_MESSAGES`)) return message.reply(`Nie masz permisji`);
@@ -817,9 +863,6 @@ client.on("message", async message =>{
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   const { member, mentions, guild } = message
-  
-  const prefix = prefixguild[guild.id].prefixguild
-
   const tag = `${member}`
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
@@ -836,9 +879,11 @@ client.on("message", async message =>{
     "chuj",
     "chujoza",
   ];
+  if(message.author.id === "794363844998332417") return
   console.log(`Użytkownik: ${member} Napisał: ${message.content.slice(0)}`)
+ 
   if(message.channel.id === propozycjekanal[guild.id].propozycjekanal){
-    if(message.author.id === "794363844998332417") return
+
     if(message.content.startsWith("%")){
       message.delete()
       message.channel.send(`Komentarz od ${tag}: ${message.content.slice(0).replace(".","").replace("%","")}`)
@@ -1003,11 +1048,11 @@ command(client, 'status reset', (message) => {
   .setTimestamp()
 
   if(message.author.id === "440099311146237953") {
-    client.user.setActivity("XD", {type: 'PLAYING'})
+    client.user.setActivity("Wpadaj na solmc.pl", {type: 'PLAYING'})
     message.channel.send(embed2);
   } else {
     if(message.author.id ===  "658434554528530435"){
-      client.user.setActivity("XD", {type: 'PLAYING'})
+      client.user.setActivity("Wpadaj na solmc.pl", {type: 'PLAYING'})
       message.channel.send(embed2);
     }else{
     message.channel.send(embed)
