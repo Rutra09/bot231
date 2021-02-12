@@ -3,23 +3,23 @@ Bot moderacyjno/4fun
 Stworzony przez ArturM
 Funkcje Bota:
 -	Powitania Ustawienia:
-  o	Treść
-  o	Kanał
-  o	Kolor
+  	Treść
+  	Kanał
+  	Kolor
 -	Pożegnania Ustawienia:
-  o	Treść
-  o	Kanał
-  o	Kolor
+  	Treść
+  	Kanał
+    Kolor
 -	Mute Ustawienia:
-  o	Rola
+  	Rola
 -	Weryfikacja Ustawienia:
-  o	Rola
-  o	Kanał
+  	Rola
+  	Kanał
 -	Moderacyjne:
-  o	Ban – Blokuje osobę
-  o	Kick – Wyrzuca osobę
-  o	Mute – Wycisza osobę
+  	Ban – Blokuje osobę
+  	Kick – Wyrzuca osobę
+  	Mute – Wycisza osobę
 -	4Fun
-  o	Embed – tworzy wiadomość osadzoną
-  o	Say – wysyła wiadomość jako bot
-  o	Send – wysyła wiadomość do osoby jako bot	
+  	Embed – tworzy wiadomość osadzoną
+  	Say – wysyła wiadomość jako bot
+  	Send – wysyła wiadomość do osoby jako bot	
