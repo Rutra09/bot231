@@ -23,3 +23,8 @@ Funkcje Bota:
   	Embed – tworzy wiadomość osadzoną,
   	Say – wysyła wiadomość jako bot,
   	Send – wysyła wiadomość do osoby jako bot	
+
+Node modules wykorzystane w bocie:
+ -
+ -
+ 
