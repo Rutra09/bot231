@@ -1,11 +1,11 @@
 const Discord = require('discord.js')
 const ms = require("ms");
-
 var os = require("os");
 const fs = require('fs');
 const ytdl = require("ytdl-core");
 
 const client = new Discord.Client();
+
 
 const queue = new Map();
 const ping = require('minecraft-server-util')
@@ -22,6 +22,7 @@ const { finished } = require('stream');
 const { getUnpackedSettings } = require('http2');
 const { domain } = require('process');
 const { verify } = require('crypto');
+const { resolve } = require('path');
 let powitaniekanal = JSON.parse(fs.readFileSync('./welcomechanel.json', "utf8"));
 let warns = JSON.parse(fs.readFileSync('./warndata.json', "utf8"));
 let powitanie = JSON.parse(fs.readFileSync('./welcomemessages.json',"utf8"));
@@ -33,15 +34,17 @@ let pożegnaniekanal = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"
 let pożegnaniekolor = JSON.parse(fs.readFileSync('./goodbyechanel.json', "utf8"));
 let pożegnanie = JSON.parse(fs.readFileSync('./goodbye.json', "utf8"));
 let propozycjekanal = JSON.parse(fs.readFileSync('./chaneltopropozycje.json',"utf8")); 
-
+let graliczenie = JSON.parse(fs.readFileSync('./count.json',"utf8")); 
+let jezyk = JSON.parse(fs.readFileSync('./language.json',"utf8"));  
+let powitanierola = JSON.parse(fs.readFileSync('./joinrole.json',"utf8"));  
+let RR = JSON.parse(fs.readFileSync('./ReactionRole/RR.json',"utf8")); 
 
  // creates an arraylist containing phrases you want your bot to switch through.
 
 
   const Dlugip = 1
 
-
-
+ 
 client.on("ready", () =>{
   console.log(`Zaktywowałem bota ${client.user.tag}!`)
  // console.log(client.user)0
@@ -71,14 +74,182 @@ client.once('disconnect', () => {
 });
 // Turn bot off (destroy), then turn it back on
 
-command(client, 'ustawienia', (message) => {
+// command(client, 'rcreate', (message) => {
+
+//   const { member, mentions, guild, } = message
+//    if(!member.hasPermission('MANAGE_ROLES')) {
+//      message.reply("Brak uprawnienia **MANAGE_ROLES**")
+//      return 
+//    }
+//    var pierwszaSpacja = message.content.indexOf(" ",);
+//    var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
+//    var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+//    var czwartaSpacja = message.content.indexOf(" ", trzeciaSpacja+1)
+   
+//    if(pierwszaSpacja < 0 ) return message.reply("Nie podałeś id wiadomości")
+//    if(drugaSpacja < 0 ) return message.reply("Nie oznaczyłeś roli")
+//    if(trzeciaSpacja < 0 ) return message.reply("Nie podałeś emoji")
+//    RR[guild.id] = {ustawieniamuterole: `${message.content.slice(text).replace("<","").replace(">","").replace("@&","")}`}
+//    fs.writeFile('./muterole.json', JSON.stringify(ustawieniamuterole), function(err, result) {
+//     if(err) console.log('error', err);
+//   })
+
+//    client2.init()
+//    const client32 = client2.reInit()
+//  })
+command(client, 'settings', (message) => {
   const { msg, member, mentions, guild } = message
-  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  const args = message.content.slice(prefix.length).trim().split(/ +/); 
 
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+  var czwartaSpacja = message.content.indexOf(" ", trzeciaSpacja+1)
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("You do not have `ADMINISTRATOR` privileges.")
+if(!jezyk[guild.id]) { jezyk[guild.id] = {jezyk: 'english'}
+fs.writeFile('./language.json', JSON.stringify(jezyk), function(err, result) {
+if(err) console.log('error', err);
+})
+}
+console.log(`${jezyk[guild.id].jezyk.replace(" ","")}`)
+if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "english") {
+  if(message.content == `${prefix}settings`){
+    const settings = new Discord.MessageEmbed()
+    .setTitle("Settings")
+    .addField('Mute', `Użycie ${prefix}settings mute`)
+    .addField('verification', `Użycie ${prefix}settings verification`)
+    .addField(`Sugestions`, `Użycie ${prefix}settings sugestions`)
+    .addField(`Welcome`, `Użycie ${prefix}welcome`)
+    .addField(`Farewell`, `Użycie ${prefix}farewell`)
+    .addField(`Counting`, `Użycie ${prefix}settings counting`)
+    message.channel.send(settings)
+    }
+    
+    if(message.content.slice(0, `${prefix}settings mute`.length) == `${prefix}settings mute`){
+      const text = drugaSpacja
+      if(text < 0 ) return message.reply("You didn't tag the mute role")
+      console.log(text)
+      message.channel.send(`I set the roles to: \n`+ message.content.slice(text) )
+    ustawieniamuterole[guild.id] = {ustawieniamuterole: `${message.content.slice(text).replace("<","").replace(">","").replace("@&","")}`}
+     fs.writeFile('./muterole.json', JSON.stringify(ustawieniamuterole), function(err, result) {
+      if(err) console.log('error', err);
+    })
+    }
+    if(message.content.slice(0, `${prefix}settings verification`.length) == `${prefix}settings verification`){
+      const ustawieniaeryfikacji = new Discord.MessageEmbed()
+      .setTitle("Settings")
+      if(!weryfikacjakanal[guild.id]){
+        ustawieniaeryfikacji.addField("Channel", `Not set`)
+        ustawieniaeryfikacji.addField(`Role`, `To set the channel settings channel`)
+      }else{
+        ustawieniaeryfikacji.addField("Channel", `<#${weryfikacjakanal[guild.id].weryfikacjakanal.replace(" ","")}>`)
+      }
+      if(!weryfikacjarola[guild.id]){
+        ustawieniaeryfikacji.addField("Role", `Not set`)
+        ustawieniaeryfikacji.addField(`Role`, `To set the role settings role`)
+      }else{
+        ustawieniaeryfikacji.addField("Role", `<@&${weryfikacjarola[guild.id].weryfikacjarola}>`)
+      }
+    
+    
+    if(message.content.slice(0, `${prefix}settings verification channel`.length) == `${prefix}settings verification channel`){
+      const text = trzeciaSpacja
+      if(text < 0 ) return message.reply("You didn't tag the channel")
+      message.channel.send(`I set the channel to: ${message.content.slice(text)}`)
+      weryfikacjakanal[guild.id] = {weryfikacjakanal: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`}
+      fs.writeFile('./veryficationchanel.json', JSON.stringify(weryfikacjakanal), function(err, result) {
+       if(err) console.log('error', err);
+     })
+    }else{
+      if(message.content.slice(0, `${prefix}settings verification role`.length ) == `${prefix}settings verification role`){
+        const text = trzeciaSpacja
+        if(text < 0 ) return message.reply("You didn't tag the role")
+        message.channel.send(`I set the roles to: ${message.content.slice(text)}`)
+        weryfikacjarola[guild.id] = {weryfikacjarola: `${message.content.slice(text).replace("<","").replace(">","").replace("@&","").replace(" ","")}`}
+        fs.writeFile('./veryficationrole.json', JSON.stringify(weryfikacjarola), function(err, result) {
+         if(err) console.log('error', err);
+        })
+      }else{
+      message.channel.send(ustawieniaeryfikacji)
+    }
+    }
+    }
+    if(message.content.slice(0, `${prefix}settings suggestion`.length) == `${prefix}settings suggestion`){
+      if(message.content.slice(0, `${prefix}settings suggestion channel`.length) == `${prefix}settings suggestion channel`){
+        const text = trzeciaSpacja
+        if(text < 0 ) return message.reply("You didn't tag the channel")
+        message.channel.send(`I set the channel to: ${message.content.slice(text)}`)
+        propozycjekanal[guild.id] = {propozycjekanal: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`}
+        fs.writeFile('./chaneltopropozycje.json', JSON.stringify(propozycjekanal), function(err, result) {
+         if(err) console.log('error', err);
+        })
+      }else if(message.content.slice(0, `${prefix}settings suggestion emoji`.length) == `${prefix}settings suggestion emoji`){
+        const emoji1 = trzeciaSpacja
+        const emoji2 = czwartaSpacja
+        if(emoji1 < 0 || emoji2 < 0) return message.reply("You didn't provide an emoji one or two.")
+        message.channel.send(`I set the emoji to: ${message.content.slice(emoji1, emoji2)} i ${message.content.slice(emoji2)}`)
+        propozycjekanal[guild.id] = {emoji1: `${message.content.slice(emoji1, emoji2)}`, emoji2: `${message.content.slice(emoji2)}`, propozycjekanal: `${propozycjekanal[guild.id].propozycjekanal}`}
+        fs.writeFile('./chaneltopropozycje.json', JSON.stringify(propozycjekanal), function(err, result) {
+         if(err) console.log('error', err);
+        })
+      }else{
+        const propozycjamessageustawinia = new Discord.MessageEmbed()
+        .setTitle("Settings")
+        if(!propozycjekanal[guild.id]){
+          propozycjamessageustawinia.addField("Channel", `Not set`)
+          propozycjamessageustawinia.addField(`Channel`, `To set the settings suggestion channel`)
+          propozycjamessageustawinia.addField("Emoji", `Not set`)
+          propozycjamessageustawinia.addField(`Emoji`, `To set the settings suggestion emoji`)
+        }else{
+          propozycjamessageustawinia.addField("Channel", `<#${propozycjekanal[guild.id].propozycjekanal}>`)
+          propozycjamessageustawinia.addField("Emoji", `${propozycjekanal[guild.id].emoji1} ${propozycjekanal[guild.id].emoji2}`)
+        } 
+        message.channel.send(propozycjamessageustawinia)
+      }
+    }
+    if(message.content.slice(0, `${prefix}settings counting`.length) == `${prefix}settings counting`){
+      if(message.content.slice(0,`${prefix}settings counting channel`.length) == `${prefix}settings counting channel`){
+        const text = trzeciaSpacja
+        if(text < 0 ) return message.reply("You didn't tag the channel")
+        message.channel.send(`I set the channel to: ${message.content.slice(text)}`)
+        graliczenie[guild.id] = {graliczenie: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`, ostatnialiczba: graliczenie[guild.id].ostatnialiczba}
+        fs.writeFile('./count.json', JSON.stringify(graliczenie), function(err, result) {
+         if(err) console.log('error', err);
+        })
+      }else{
+        const propozycjamessageustawinia = new Discord.MessageEmbed()
+        .setTitle("Settings")
+        if(!graliczenie[guild.id]){
+          propozycjamessageustawinia.addField("Channel", `Not set`)
+          propozycjamessageustawinia.addField(`Channel`, `To set the settings counting channel`)
+        }else{
+          propozycjamessageustawinia.addField("Channel", `<#${graliczenie[guild.id].graliczenie}>`)
+        }        
+        message.channel.send(propozycjamessageustawinia)
+      }
+    } 
+}else{
+  message.reply("Language on this server is polish.")
+  message.reply("Język na tym serwerze to polski")
+}
+})
+
+command(client, 'ustawienia', (message) => {
+  const { msg, member, mentions, guild } = message
+  const args = message.content.slice(prefix.length).trim().split(/ +/); 
+
+  var pierwszaSpacja = message.content.indexOf(" ",);
+  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
+  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+  var czwartaSpacja = message.content.indexOf(" ", trzeciaSpacja+1)
 if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+if(!jezyk[guild.id]) { jezyk[guild.id] = {jezyk: 'polish'}
+fs.writeFile('./language.json', JSON.stringify(jezyk), function(err, result) {
+if(err) console.log('error', err);
+})
+}
+console.log(`${jezyk[guild.id].jezyk.replace(" ","")}`)
+if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
 if(message.content == `${prefix}ustawienia`){
 const Ustawienia = new Discord.MessageEmbed()
 .setTitle("Ustawienia")
@@ -87,6 +258,7 @@ const Ustawienia = new Discord.MessageEmbed()
 .addField(`Propozycje`, `Użycie ${prefix}ustawienia propozycje`)
 .addField(`Powitanie`, `Użycie ${prefix}powitanie`)
 .addField(`Pożegnanie`, `Użycie ${prefix}pożegnanie`)
+.addField(`Liczenie`, `Użycie ${prefix}ustawienia liczenie`)
 message.channel.send(Ustawienia)
 }
 
@@ -105,11 +277,13 @@ if(message.content.slice(0, prefix.length + 22) == `${prefix}ustawienia weryfika
   .setTitle("Ustawienia")
   if(!weryfikacjakanal[guild.id]){
     ustawieniaeryfikacji.addField("Kanał", `Nie ustawiono`)
+    ustawieniaeryfikacji.addField(`Rola`, `Aby ustawić ustawienia weryfikacja kanal`)
   }else{
     ustawieniaeryfikacji.addField("Kanał", `<#${weryfikacjakanal[guild.id].weryfikacjakanal.replace(" ","")}>`)
   }
   if(!weryfikacjarola[guild.id]){
     ustawieniaeryfikacji.addField("Rola", `Nie ustawiono`)
+    ustawieniaeryfikacji.addField(`Rola`, `Aby ustawić ustawienia weryfikacja rola`)
   }else{
     ustawieniaeryfikacji.addField("Rola", `<@&${weryfikacjarola[guild.id].weryfikacjarola}>`)
   }
@@ -139,11 +313,20 @@ if(message.content.slice(0, prefix.length + 28) == `${prefix}ustawienia weryfika
 }
 
 if(message.content.slice(0, prefix.length + 21) == `${prefix}ustawienia propozycje`){
-  if(message.content.slice(0, prefix.length + 25) == `${prefix}ustawienia propozycje set`){
+  if(message.content.slice(0, prefix.length + 27) == `${prefix}ustawienia propozycje kanal`){
     const text = trzeciaSpacja
     if(text < 0 ) return message.reply("Nie zahasztagowałeś kanału")
     message.channel.send(`Ustawiłem kanał na ${message.content.slice(text)}`)
     propozycjekanal[guild.id] = {propozycjekanal: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`}
+    fs.writeFile('./chaneltopropozycje.json', JSON.stringify(propozycjekanal), function(err, result) {
+     if(err) console.log('error', err);
+    })
+  }else if(message.content.slice(0, prefix.length + 27) == `${prefix}ustawienia propozycje emoji`){
+    const emoji1 = trzeciaSpacja
+    const emoji2 = czwartaSpacja
+    if(emoji1 < 0 || emoji2 < 0) return message.reply("Nie podałeś emoji jeden lub dwa")
+    message.channel.send(`Ustawiłem emoji na ${message.content.slice(emoji1, emoji2)} i ${message.content.slice(emoji2)}`)
+    propozycjekanal[guild.id] = {emoji1: `${message.content.slice(emoji1, emoji2)}`, emoji2: `${message.content.slice(emoji2)}`, propozycjekanal: `${propozycjekanal[guild.id].propozycjekanal}`}
     fs.writeFile('./chaneltopropozycje.json', JSON.stringify(propozycjekanal), function(err, result) {
      if(err) console.log('error', err);
     })
@@ -153,19 +336,50 @@ if(message.content.slice(0, prefix.length + 21) == `${prefix}ustawienia propozyc
     .setTitle("Ustawienia")
     if(!propozycjekanal[guild.id]){
       propozycjamessageustawinia.addField("Kanał", `Nie ustawiono`)
+      propozycjamessageustawinia.addField(`Kanał`, `Aby ustawić ustawienia propozycje kanal`)
+      propozycjamessageustawinia.addField("Emoji", `Nie ustawiono`)
+      propozycjamessageustawinia.addField(`Emoji`, `Aby ustawić ustawienia propozycje emoji`)
     }else{
       propozycjamessageustawinia.addField("Kanał", `<#${propozycjekanal[guild.id].propozycjekanal}>`)
+      propozycjamessageustawinia.addField("Emoji", `${propozycjekanal[guild.id].emoji1} ${propozycjekanal[guild.id].emoji2}`)
     }
+    
     message.channel.send(propozycjamessageustawinia)
   }
 
 }
+if(message.content.slice(0, prefix.length + 19) == `${prefix}ustawienia liczenie`){
+  if(message.content.slice(0, prefix.length + 25) == `${prefix}ustawienia liczenie kanal`){
+    const text = trzeciaSpacja
+    if(text < 0 ) return message.reply("Nie zahasztagowałeś kanału")
+    message.channel.send(`Ustawiłem kanał na ${message.content.slice(text)}`)
+    graliczenie[guild.id] = {graliczenie: `${message.content.slice(text).replace("<","").replace(">","").replace("#","").replace(" ","")}`, ostatnialiczba: graliczenie[guild.id].ostatnialiczba}
+    fs.writeFile('./count.json', JSON.stringify(graliczenie), function(err, result) {
+     if(err) console.log('error', err);
+    })
+  }else{
+    
+    const propozycjamessageustawinia = new Discord.MessageEmbed()
+    .setTitle("Ustawienia")
+    if(!graliczenie[guild.id]){
+      propozycjamessageustawinia.addField("Kanał", `Nie ustawiono`)
+      propozycjamessageustawinia.addField(`Kanał`, `Aby ustawić ustawienia liczenie kanal`)
+    }else{
+      propozycjamessageustawinia.addField("Kanał", `<#${graliczenie[guild.id].graliczenie}>`)
+    }
+    
+    message.channel.send(propozycjamessageustawinia)
+  }
+}
 
+}else{
+  message.reply("Language on this server is English.")
+  message.reply("Język na tym serwerze to Angielski")
+}
 
 })
 
-
-command(client, 'powitanie', (message) => {
+command(client, 'welcome', (message) => {
   const { msg, member, mentions, guild } = message
   
  
@@ -174,7 +388,14 @@ command(client, 'powitanie', (message) => {
   var pierwszaSpacja = message.content.indexOf(" ",);
   var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
   var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
-if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("You do not have `ADMINISTRATOR` privileges.")
+if(!jezyk[guild.id]) { jezyk[guild.id] = {jezyk: 'english'}
+fs.writeFile('./language.json', JSON.stringify(jezyk), function(err, result) {
+if(err) console.log('error', err);
+})
+}
+console.log(`${jezyk[guild.id].jezyk.replace(" ","")}`)
+
   if(!colorpowitanie[guild.id]) { colorpowitanie[guild.id] = {colorpowitanie: '#a2ff00'}
     fs.writeFile('./welcomecolor.json', JSON.stringify(colorpowitanie), function(err, result) {
     if(err) console.log('error', err);
@@ -186,6 +407,94 @@ if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie mas
   })
 
   }
+  if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "english") {
+  if(message.content == `${prefix}welcome`){
+
+    const Domyslny = new Discord.MessageEmbed()
+    .setColor(colorpowitanie[guild.id].colorpowitanie)
+    .setTitle("Powitanie")
+    .addField(`${prefix}welcome set`, 'Set greetings after set, To mark a person add %Person and to show the number of people on the server add %Amount')
+    .addField(`${prefix}welcome color`, 'Sets the color of the greeting after color')
+    .addField(`${prefix}welcome channel`, `It sets the greeting channel by channel. To add a channel correctly, hashtag the given channel`)
+    .addField(`Current Farewell`, powitanie[guild.id].powitanie)
+    .addField('Current Color', colorpowitanie[guild.id].colorpowitanie + `    The color of this message represents the color of the outgoing message`)
+
+    if(!powitaniekanal[guild.id]) {
+      Domyslny.addField(`Current Channel`, `Not set` )
+    }else{
+      Domyslny.addField(`Current Channel`, `<#${powitaniekanal[guild.id].powitaniekanal.replace(" ", "")}>` )
+    }
+
+    message.channel.send(Domyslny)
+  }
+if(message.content.slice(0, `${prefix}welcome set`.length) == `${prefix}welcome set`){
+const text = drugaSpacja
+console.log(text)
+if(text < 0 ) return message.reply("You did not provide a greeting message")
+if(text > 0 ) {
+message.channel.send(`I set up a greeting that reads: \n`+ message.content.slice(text) )
+powitanie[guild.id] = {powitanie: `${message.content.slice(text)}`}
+ fs.writeFile('./welcomemessages.json', JSON.stringify(powitanie), function(err, result) {
+  if(err) console.log('error', err);
+})
+}
+}
+if(message.content.slice(0, `${prefix}welcome channel`.length) == `${prefix}welcome channel`){
+  const text = drugaSpacja
+  if(text < 0 ) return message.reply("You did not enter a channel")
+  powitaniekanal[guild.id] = {powitaniekanal: `${message.content.slice(text).replace("<", "").replace(">","").replace("#","").replace(" ","")}`}
+  fs.writeFile('./welcomechanel.json', JSON.stringify(powitaniekanal), function(err, result) {
+    if(err) console.log('error', err);
+  })
+
+  message.channel.send('Welcome channel set to ' + message.content.slice(text))
+}
+if(message.content.slice(0, `${prefix}welcome color`.length) == `${prefix}welcome color`){
+const text = drugaSpacja
+if(text < 0 ) return message.reply("You did not enter the coloru")
+colorpowitanie[guild.id] = {colorpowitanie: `${message.content.slice(text)}`}
+  fs.writeFile('./welcomecolor.json', JSON.stringify(colorpowitanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
+
+  message.channel.send('Welcome color set to ' + message.content.slice(text))
+  const color = new Discord.MessageEmbed()
+  .setColor(colorpowitanie[guild.id].colorpowitanie)
+message.channel.send(color)
+}
+  }else{
+    message.reply("Language on this server is polish.")
+  message.reply("Język na tym serwerze to polski")
+  }
+})
+
+command(client, 'powitanie', (message) => {
+  const { msg, member, mentions, guild } = message
+  
+ 
+  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  
+  var pierwszaSpacja = message.content.indexOf(" ",);
+  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
+  var trzeciaSpacja = message.content.indexOf(" ", drugaSpacja+1)
+if(!message.member.hasPermission('ADMINISTRATOR')) return message.reply("Nie masz uprawnień `ADMINISTRATOR`")
+if(!jezyk[guild.id]) { jezyk[guild.id] = {jezyk: 'polish'}
+fs.writeFile('./language.json', JSON.stringify(jezyk), function(err, result) {
+if(err) console.log('error', err);
+})
+}
+  if(!colorpowitanie[guild.id]) { colorpowitanie[guild.id] = {colorpowitanie: '#a2ff00'}
+    fs.writeFile('./welcomecolor.json', JSON.stringify(colorpowitanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
+}
+  if(!powitanie[guild.id]) { powitanie[guild.id] = {powitanie: 'Witaj %Osoba'}
+  fs.writeFile('./welcomemessages.json', JSON.stringify(powitanie), function(err, result) {
+    if(err) console.log('error', err);
+  })
+
+  }
+  if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
   if(message.content == `${prefix}powitanie`){
 
     const Domyslny = new Discord.MessageEmbed()
@@ -239,7 +548,22 @@ colorpowitanie[guild.id] = {colorpowitanie: `${message.content.slice(text)}`}
   const color = new Discord.MessageEmbed()
   .setColor(colorpowitanie[guild.id].colorpowitanie)
 message.channel.send(color)
+
 }
+if(message.content.slice(0, `${prefix}powitanie rola`.length) == `${prefix}powitanie rola`){
+  const text = drugaSpacja
+  if(text < 0 ) return message.reply("Nie oznaczyłeś roli")
+  powitanierola[guild.id] = {powitanie: `${message.content.slice(text).replace("<", "").replace(">", "").replace("@", "").replace("&", "")}`}
+    fs.writeFile('./joinrole.json', JSON.stringify(powitanierola), function(err, result) {
+      if(err) console.log('error', err);
+    })
+  
+    message.channel.send('Rola powitani ustawion na' + message.content.slice(text))
+  }
+  }else{
+    message.reply("Language on this server is English.")
+  message.reply("Język na tym serwerze to Angielski.")
+  }
 })
 
 command(client, 'pożegnanie', (message) => {
@@ -357,22 +681,23 @@ client.on('guildMemberAdd', guildMember => {
   const kanalsend = `${powitaniekanal[guild.id].powitaniekanal}`.replace(" ", "")
   const nowy = guildMember.id
   const welcomemessage = powitanie[guild.id].powitanie
+  
 
-  console.log("Witaj Nowy")
+    console.log("Witaj Nowy")
   let myGuild = client.guilds.cache.get("794365821719281704");
   let memberCount = guildMember.guild.memberCount; 
-  const witaj = welcomemessage.replace("%Osoba", `<@${nowy}>`).replace("%Ilosc", `${memberCount}`)
-  const clear = new Discord.MessageEmbed()
+  const witaj = welcomemessage.replace("%Osoba", `<@${nowy}>`).replace("%Ilosc", `${memberCount}`).replace("%Person", `<@${nowy}>`).replace("%Amount", `${memberCount}`)
+   const clear = new Discord.MessageEmbed()
       .setTitle("Witaj")  
       .setDescription(witaj)
       .setColor(colorpowitanie[guild.id].colorpowitanie)
 
   client.channels.cache.get(kanalsend).send(clear)
-  guildMember.roles.add("788331452492283904")
-  guildMember.roles.add("786863157314191390")
-  guildMember.roles.add("788331592791490620")
-  guildMember.roles.add("788335878388580362")
-  guildMember.roles.add("788331914846142494")
+ 
+
+const joinrole = powitanierola[guild.id].powitanie
+let Role = guildMember.guild.roles.cache.get(`${joinrole}`);
+
 
 
 
@@ -383,7 +708,7 @@ client.on("message", async message => {
 
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;
-
+ 
   const serverQueue = queue.get(message.guild.id);
 
   if (message.content.startsWith(`${prefix}play`)) {
@@ -409,9 +734,15 @@ async function execute(message, serverQueue) {
     );
   const permissions = voiceChannel.permissionsFor(message.client.user);
   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-    return message.channel.send(
-      "Sory nie mam permisji"
-    );
+    if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
+      return message.channel.send(
+        "Sory nie mam permisji"
+      );
+    }else{
+      return message.channel.send(
+        "Sory I don't have permisson"
+      );
+    }
   }
 
   const songInfo = await ytdl.getInfo(args[1]);
@@ -445,7 +776,12 @@ async function execute(message, serverQueue) {
     }
   } else {
     serverQueue.songs.push(song);
-    return message.channel.send(`${song.title} został dodany do kolejki`);
+    if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
+      return message.channel.send(`${song.title} został dodany do kolejki`);
+    }else{
+      message.channel.send(`${song.title} Was add to queue`);
+    }
+    
   }
 }
 
@@ -494,16 +830,6 @@ command(client, 'ping', (message) => {
     message.channel.send(`🏓Latency to ${Date.now() - message.createdTimestamp}ms. Latency bota to ${Math.round(client.ws.ping)}ms`);
   
 });
-command(client, 'logo', (message) => {
-  message.delete()
-  const logo = 'https://i.ibb.co/GQh8Kzk/logo-granko.png'
-  const logoembed = new Discord.MessageEmbed()
-  .setImage(logo) 
-  .setTitle("Logo Serwera Granko")
-  .setDescription("Autor loga: <@440099311146237953> ")
-  message.channel.send(logoembed)
-
-});
 
 command(client, 'odbierz', (message) => {
   const { member, channel, content, mentions, guild, id } = message
@@ -525,10 +851,6 @@ command(client, 'odbierz', (message) => {
   }  
 })
 
-
-
-
-
 command(client, 'nadaj', (message) => {
   const { member, channel, content, mentions, guild, id } = message
   const tag = `<@${member.id}>`
@@ -548,11 +870,13 @@ command(client, 'nadaj', (message) => {
   }  
 })
 
-
 command(client, 'clear', (message) => {
+  const {guild ,} = message
   var pierwszaSpacja = message.content.indexOf(" ",);
  var  drugaSpacja = message.content.indexOf(" ", pierwszaSpacja+1);
-  if(message.member.hasPermission("MANAGE_MESSAGES")) {
+  
+    if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
+      if(message.member.hasPermission("MANAGE_MESSAGES")) {
 if(pierwszaSpacja < 0 ) return message.reply("Podaj ilość wiadomości")
     message.channel.bulkDelete(message.content.slice(pierwszaSpacja),true).then(msg=>{
       const clear = new Discord.MessageEmbed()
@@ -571,10 +895,28 @@ if(pierwszaSpacja < 0 ) return message.reply("Podaj ilość wiadomości")
     message.delete()
     message.channel.send("Brak uprawnień")
   }
-    })
+}else{
+  if(message.member.hasPermission("MANAGE_MESSAGES")) {
+  if(pierwszaSpacja < 0 ) return message.reply("Enter the number of messages")
+    message.channel.bulkDelete(message.content.slice(pierwszaSpacja),true).then(msg=>{
+      const clear = new Discord.MessageEmbed()
+      
+      .setTitle("Clear")
+      .setDescription(`I deleted ${msg.size} message`)
+      .setColor('00ff22')
+      console.log(`I deleted ${msg.size} message`)
+      message.channel.send(clear)
+      setTimeout(function(){ 
+        message.channel.bulkDelete(1,true)
+       }, 2000);
+      })
 
-
-
+  }else{ 
+    message.delete()
+    message.channel.send("No permission")
+  }
+}
+})
 
 command(client, 'zakup', (message) => {
   if(message.channel.id === '801353732268097576'){ 
@@ -667,7 +1009,7 @@ command(client, 'weryfikacja', (message) => {
   message.delete()
   setTimeout(function(){ 
   message.channel.awaitMessages(m => m.author.id == message.author.id,
-    {max: 1, time: 15000}).then(collected => {
+    {max: 1, time: ms('30s')}).then(collected => {
             // only accept messages by the user who sent the command
             // accept only 1 message, and return the promise after 30000ms = 30s
   
@@ -694,10 +1036,11 @@ command(client, 'weryfikacja', (message) => {
                 message.channel.bulkDelete(3,true)
                }, 2000);
             }
- }, 10000)
+ },  ms('30s'))
 })
 }
 });
+
 command(client, 'zasady', (message) => {
   const { member, mentions } = message
   const tag = `<@${member.id}>`
@@ -777,6 +1120,7 @@ command(client, 'unwarn', (message) =>{
   }
 
 })
+
 command(client, 'warn', (message) =>{
   const { member, mentions } = message
   const tag = `<@${member.id}>`
@@ -830,7 +1174,6 @@ command(client, 'warn', (message) =>{
 
 })
 
-
 command(client, 'avatar', (message) => {
       
         
@@ -878,10 +1221,10 @@ client.on("message", async message =>{
     "Chujoza",
     "chuj",
     "chujoza",
-  ];
+  ]; 
   if(message.author.id === "794363844998332417") return
   console.log(`Użytkownik: ${member} Napisał: ${message.content.slice(0)}`)
- 
+ if(propozycjekanal[guild.id]){
   if(message.channel.id === propozycjekanal[guild.id].propozycjekanal){
 
     if(message.content.startsWith("%")){
@@ -895,18 +1238,41 @@ client.on("message", async message =>{
     .setColor("#32a83e")
 
     message.channel.send(Propozycja)
+    
 
     setTimeout(function(){ 
 const kanal =  client.channels.cache.get(propozycjekanal[guild.id].propozycjekanal)
     kanal.messages.fetch({ limit: 2 }).then(messages => { var lastMessage = messages.first();
-      
-      lastMessage.react("✔")
-      lastMessage.react("✖")
+      const emoji1 = `${propozycjekanal[guild.id].emoji1}`
+      const emoji2 = `${propozycjekanal[guild.id].emoji2}`
+      lastMessage.react(`${emoji1}`)
+      lastMessage.react(`${emoji2}`)
      })
     
     }, 1);  
   }
   }
+ }
+ if(graliczenie[guild.id]){
+  if(message.channel.id === graliczenie[guild.id].graliczenie){
+
+    var count = graliczenie[guild.id].ostatnialiczba
+    if(message.content == count + 1){
+      var count2 = ++count
+      graliczenie[guild.id] = {graliczenie: `${graliczenie[guild.id].graliczenie}`,ostatnialiczba: count2}
+      fs.writeFile('./count.json', JSON.stringify(graliczenie), function(err, result) {
+       if(err) console.log('error', err);
+      })
+    }else{
+      message.delete()
+      message.reply("Hej! Liczba która jest następna to " + ++count)
+      setTimeout(function(){ 
+        message.channel.bulkDelete(1,true)
+       }, 1000);
+    }
+    
+  }
+ }
   
 
 
@@ -952,7 +1318,6 @@ if(message.channel.id === '801012718370029608'){
     }
 });
 
-
 command(client, 'cichysend', (message)=> {
   const { member, mentions } = message
   const tag = `<@${member.id}>`
@@ -968,7 +1333,6 @@ command(client, 'cichysend', (message)=> {
 message.delete()
 
 })
-
 
 command(client, 'send', (message)=> {
   const { member, mentions } = message
@@ -989,9 +1353,8 @@ command(client, 'send', (message)=> {
 
 })
 command(client, 'test', (message)=> {
-
-
 })
+
 command(client, 'tort', (message) => {
   const { member, mentions } = message
 
@@ -1010,8 +1373,6 @@ command(client, 'tort', (message) => {
 });
 });
 
-
-
 command(client, 'placek', (message) => {
   const { member, mentions } = message
 
@@ -1029,7 +1390,6 @@ command(client, 'placek', (message) => {
   }
 });
 });
-
 
 command(client, 'status reset', (message) => {
   message.delete()
@@ -1174,7 +1534,6 @@ command(client, 'status watching', (message) => {
     if(message.member.hasPermission("MANAGE_MESSAGES")) return message.channel.send(embed);
     })
 
-
   command(client, 'wazne',  (message) =>{ 
     message.delete()
     channel = client.channels.cache.get('781114242904358932');
@@ -1187,16 +1546,11 @@ command(client, 'status watching', (message) => {
     })
       //});
 
-
-
-
-
-
-     
-  
-  command(client, 'pomoc', (message) => {
+  command(client, 'help', (message) => {
+    const {guild, member} = message
     channel = client.channels.cache.get('783006441425993770');
     message.delete()
+    if(`${jezyk[guild.id].jezyk.replace(" ","")}` == "polish") {
     const embed = new Discord.MessageEmbed()
     .setTitle(`HELP`)
     .setDescription("Wysyłam pomocnik w wiadomości prywatnej")
@@ -1268,6 +1622,14 @@ command(client, 'status watching', (message) => {
         {
           name: "Embed",
           value: "Wysyła embed. Użycie: **"+ prefix +"embed <tytuł> <kolor w hex> <opis>**"
+        },       
+        {
+          name: "Ustawienia",
+          value: "Wysyła możliwe ustawienia. Użycie: **"+ prefix +"ustawienia**"
+        },
+        {
+          name: "ReactRole",
+          value: "Tworzy reaction role. Użycie: **"+ prefix +"rcreate <id wiadomości> <ranga> <emoji>**"
         },
       ],
       timestamp: new Date(),
@@ -1283,6 +1645,92 @@ command(client, 'status watching', (message) => {
     //message.channel.send(`⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**MUTE** - Wycisza Gracza. Użycie: **mute @user czas tryb**⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯`)
     //message.channel.send(`⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**INFO** - Informacje o serwer minecraft. Użycie: **info**⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯`)
     //message.channel.send(`**⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯HELP⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**`)
+}else{
+    const embed = new Discord.MessageEmbed()
+    .setTitle(`HELP`)
+    .setDescription("I'm sending a helper in a private message")
+    .setColor(10038562)
+    .setTimestamp()
+    message.channel.send(embed);
+    setTimeout(function(){ 
+      message.delete()
+   }, 5000);
+
+    message.member.send({embed: {
+      color: 2067276,
+      author: {
+      },
+      title: "HELP",
+      description: "",
+      fields: [{
+        name: "Prefix",
+        value: "My prefix on this server is: **"+ prefix + "**"
+      },
+        {
+          name: "Ban",
+          value: "Ban the Player. Use: **"+ prefix +"ban @user**"
+        },
+        {
+          name: "Kick",
+          value: "Kicks the Player. Use: **"+ prefix +"kick @user**"
+        },
+        {
+          name: "Mute",
+          value: "Mutes the Player. Use: **"+ prefix +"mute @user**"
+        },
+        {
+          name: "Info",
+          value: "Bot info. Use: **"+ prefix +"info**"
+        },
+        {
+          name: "Wazne",
+          value: "You are typing as a bot with the header Announcement. Use: **"+ prefix +"wazne text**"
+        },
+        {
+          name: "Saym",
+          value: "You write as a bot only in embed. Use: **"+ prefix +"saym text**"
+        },
+        {
+          name: "Say",
+          value: "You write as a bot. Use: **"+ prefix +"say text**"
+        },
+        {
+          name: "Cake",
+          value: "He gives a cake. Use: **"+ prefix +"tort**"
+        },
+        {
+          name: "PanCake",
+          value: "Daje Placka. Użycie: **"+ prefix +"placek**"
+        },
+        {
+          name: "Status",
+          value: "Changes bot status. Use: **"+ prefix +"status watching/playing text** or **"+ prefix +"status reset**"
+        },
+        {
+          name: "Avatar",
+          value: "Displays the user's avatar. Use: **"+ prefix +"avatar @user**"
+        },
+        {
+          name: "Clear",
+          value: "Deletes the message. Use: **"+ prefix +"clear quantity**"
+        },
+        {
+          name: "Embed",
+          value: "Sends embed. Use: **"+ prefix +"embed <tittle> <color in hex> <description>**"
+        },       
+        {
+          name: "Settings",
+          value: "Sends possible settings. Use: **"+ prefix +"settings**"
+        }
+      ],
+      timestamp: new Date(),
+      footer: {
+        icon_url: client.user.avatarURL,
+      }
+    }
+    })
+  
+}
   })
 
   command(client, 'ban', (message) => {
@@ -1391,25 +1839,6 @@ command(client, 'status watching', (message) => {
         message.channel.send("Brak uprawnień")
       }
     })
-    const onJoin = async (member) => {
-      const { id, guild } = member
-  
-      const redisClient = await redis()
-      try {
-        redisClient.get(`${redisKeyPrefix}${id}-${guild.id}`, (err, result) => {
-          if (err) {
-            console.error('Redis GET error:', err)
-          } else if (result) {
-            giveRole(member)
-          } else {
-            console.log('The user is not muted')
-          }
-        })
-      } finally {
-        redisClient.quit()
-      }
-    }
-
 
 
 client.login(token)  
